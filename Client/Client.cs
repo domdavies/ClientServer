@@ -152,13 +152,6 @@ namespace Client
 
         private void ProcessServerResponse()
         {
-            /*
-            while (reader != null)
-            {
-                //Console.WriteLine(reader.ReadLine());
-                clientForm.UpdateGameWindow("Server says: " + reader.ReadLine());
-            }
-            */
             int numberOfBytes;
             try
             {
@@ -173,31 +166,28 @@ namespace Client
                     recievedMessage = formatter.Deserialize(stream) as Packet;
                     switch (recievedMessage.packetType)
                     {
+                        //-----------------Chat Messaging System-----------------------
+                        //server sends out a response to the relevent clients
                         case PacketType.ChatMessage:
-                            ChatMessagePacket chat = (ChatMessagePacket)recievedMessage;
-                            clientForm.UpdateChatWindow(chat.sender + ": "+ chat.message);
+                            ChatResponse(recievedMessage);
                             break;
                         case PacketType.PrivateMessage:
-                            PrivateMessage pMessage = (PrivateMessage)recievedMessage;
-                            if (pMessage.sender != null)
-                            {
-                                clientForm.UpdateChatWindow(pMessage.sender + ": " + pMessage.message);
-                            }
-                            else
-                                clientForm.UpdateChatWindow(pMessage.recipient + ": " + pMessage.message);
+                            PrivateResponse(recievedMessage);
                             break;
                         case PacketType.ClientName:
-                            ClientNamePacket name = (ClientNamePacket)recievedMessage;
-                            if (!clientForm.listBox1.Items.Contains(name.name))
-                            {
-                                clientForm.UpdateClientNameWindow(name.name);
-                            }
+                            ClientNameResponse(recievedMessage);
+                            break;
+                        case PacketType.CreateGroup:
+                            CreateGroup(recievedMessage);
                             break;
                         case PacketType.GroupMessage:
-                            GroupMessage groupMessage = (GroupMessage)recievedMessage;
-                            clientForm.UpdateChatWindow(groupMessage.sender + ": " + groupMessage.message);
-                            clientForm.CreateGroupChat(groupMessage.GroupName);
+                            GroupMessage(recievedMessage);
                             break;
+                        //-------------------------------------------------------------
+                        //-------------------------------------------------------------
+
+
+                        //-----------------Game Messaging System-----------------------
                         case PacketType.ConnectToGame:
                             ConnectToGame connectPacket = (ConnectToGame)recievedMessage;
                             StartGame();
@@ -209,6 +199,8 @@ namespace Client
                             break;
                         default:
                             break;
+                        //-------------------------------------------------------------
+                        //-------------------------------------------------------------
                     }
                 }
             }
@@ -216,6 +208,45 @@ namespace Client
             {
 
             }
+        }
+
+        private void ChatResponse(Packet recieved)
+        {
+            ChatMessagePacket chat = (ChatMessagePacket)recieved;
+            clientForm.UpdateChatWindow(chat.sender + " - ALL :     " + chat.message);
+        }
+
+        private void PrivateResponse(Packet recieved)
+        {
+            PrivateMessage pMessage = (PrivateMessage)recieved;
+            if (pMessage.sender != null)
+            {
+                clientForm.UpdateChatWindow(pMessage.sender + " - YOU :     " + pMessage.message);
+            }
+            else
+                clientForm.UpdateChatWindow("YOU - " + pMessage.recipient + ":     " + pMessage.message);
+        }
+
+        private void ClientNameResponse(Packet recieved)
+        {
+            ClientNamePacket name = (ClientNamePacket)recieved;
+            if (!clientForm.listBox1.Items.Contains(name.name))
+            {
+                clientForm.UpdateClientNameWindow(name.name);
+            }
+        }
+
+        private void CreateGroup(Packet recieved)
+        {
+            CreateGroup groupMessage = (CreateGroup)recieved;
+            //clientForm.UpdateChatWindow(groupMessage.sender + " - " + groupMessage.GroupName + ":     " + groupMessage.message);
+            clientForm.CreateGroupChat(groupMessage.GroupName);
+        }
+
+        private void GroupMessage(Packet recieved)
+        {
+            GroupMessage groupMessage = (GroupMessage)recieved;
+            clientForm.UpdateChatWindow(groupMessage.sender + " - " + groupMessage.GroupName + ":     " + groupMessage.message);
         }
     }
 }

@@ -154,7 +154,7 @@ namespace Server
                             {
                                 if (chat.message != null)
                                 {
-                                    curClient.Value.Send(clientNames[index]);
+                                    //curClient.Value.Send(clientNames[index]);
                                     curClient.Value.Send(chat);
                                 }
                             }
@@ -180,43 +180,62 @@ namespace Server
                             {
                                 foreach (KeyValuePair<int, ClientNamePacket> curClient1 in clientNames)
                                 {
-                                    curClient.Value.Send(curClient1.Value);
+                                    //send the names of all clients to client 
+                                    //except for the clients own name
+                                    if (curClient.Value.GetName() != curClient1.Value.name)
+                                        curClient.Value.Send(curClient1.Value);
                                 }
                             }
                             break;
+
                         case PacketType.Disconnect:
                             Disconnect disconnect = (Disconnect)recievedMessage;
                             Client client = clients[index];
                             client.Close();
                             clients.TryRemove(index, out client);
                             break;
+
+                        case PacketType.CreateGroup:
+                            CreateGroup createGroupMessage = (CreateGroup)recievedMessage;
+                            createGroupMessage.sender = clients[index].GetName();
+
+                            if (!groupChat.ContainsKey(createGroupMessage.GroupName))
+                            {
+                                groupChat.Add(createGroupMessage.GroupName, createGroupMessage.recipients);
+                            }
+
+                            foreach (KeyValuePair<int, Client> curClient in clients)
+                            {
+                                if (createGroupMessage.recipients.Contains(curClient.Value.GetName()))
+                                {
+                                    curClient.Value.Send(createGroupMessage);
+                                }
+                            }
+                            break;
                         case PacketType.GroupMessage:
                             GroupMessage groupMessage = (GroupMessage)recievedMessage;
                             groupMessage.sender = clients[index].GetName();
-                            if (!groupChat.ContainsKey(groupMessage.GroupName))
+
+                            //loops through the current list of groupchats stored on the server
+                            foreach (KeyValuePair<string, List<string>> curGroup in groupChat)
                             {
-                                groupChat.Add(groupMessage.GroupName, groupMessage.recipients);
+                                //creates the recipients for the group message, by looking for a group that matches
+                                if (curGroup.Key == groupMessage.GroupName)
+                                {
+                                    groupMessage.recipients = curGroup.Value;
+                                }
                             }
-                            //Console.WriteLine(groupMessage.recipients[0]);
+
                             foreach (KeyValuePair<int, Client> curClient in clients)
                             {
+                                //sends the message to all recipients that are in the group
                                 if (groupMessage.recipients.Contains(curClient.Value.GetName()))
                                 {
                                     curClient.Value.Send(groupMessage);
                                 }
                             }
-                            foreach (KeyValuePair<string, List<string>> currentChat in groupChat)
-                            {
-                                if (groupMessage.GroupName == currentChat.Key)
-                                {
-                                    foreach (string recipient in currentChat.Value)
-                                    {
-
-                                    }
-                                }
-                            }
-
                             break;
+
                         case PacketType.ConnectToGame:
                             //server recieves this packet 
                             ConnectToGame connect = (ConnectToGame)recievedMessage;
