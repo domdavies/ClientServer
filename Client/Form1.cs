@@ -62,40 +62,34 @@ namespace Client
 
         public void CreateGroupChat(string GroupName)
         {
-            if (listBox2.InvokeRequired)
+            if (listBox3.InvokeRequired)
             {
                 Invoke(new Action(() =>
                 {
-                    UpdateClientNameWindow(GroupName);
+                    CreateGroupChat(GroupName);
                 }));
             }
             else
             {
-                if (!listBox2.Items.Contains(GroupName))
+                if (!listBox3.Items.Contains(GroupName))
                 {
-                    listBox2.Items.Add(GroupName);
+                    listBox3.Items.Add(GroupName);
                 }
             }
         }
 
         private void SubmitButton_Click(object sender, EventArgs e)
         {
-            if (listBox2.SelectedItem != null)
+            if (listBox3.SelectedItem != null)
             {
-                Packets.GroupMessage groupMessage = new Packets.GroupMessage()
+                Packets.GroupMessage GroupMessage = new Packets.GroupMessage()
                 {
                     message = inputField.Text,
-                    GroupName = listBox2.SelectedItem.ToString(),
+                    GroupName = listBox3.SelectedItem.ToString(),
                     sender = textBox1.Text
                 };
-                groupMessage.recipients = new List<string>();
-                groupMessage.recipients.Add(textBox1.Text);
-                foreach (string item in GroupMembers.CheckedItems)
-                {
-                    groupMessage.recipients.Add(item);
-                    Console.WriteLine(item);
-                }
-                client.SendMessage(groupMessage);
+
+                client.SendMessage(GroupMessage);
             }
             else if (listBox1.SelectedItem.ToString() == "Chat Message")
             {
@@ -105,7 +99,7 @@ namespace Client
             }
             else
             {
-                Packets.PrivateMessage message = new Packets.PrivateMessage(inputField.Text, listBox1.SelectedItem.ToString(), null);
+                Packets.PrivateMessage message = new Packets.PrivateMessage(inputField.Text, listBox1.SelectedItem.ToString(), textBox1.Text.ToString());
                 client.SendMessage(message);
             }
             inputField.Clear();
@@ -197,7 +191,22 @@ namespace Client
 
         private void addGroup_Click(object sender, EventArgs e)
         {
-            CreateGroupChat(GroupNameText.Text);
+            Packets.CreateGroup createGroupMessage = new Packets.CreateGroup()
+            {
+                GroupName = GroupNameText.Text.ToString(),
+                sender = textBox1.Text
+            };
+
+            //creating a new group
+            createGroupMessage.recipients = new List<string>();
+            createGroupMessage.recipients.Add(textBox1.Text);
+            foreach (string item in GroupMembers.CheckedItems)
+            {
+                createGroupMessage.recipients.Add(item);
+                Console.WriteLine(item);
+            }
+
+            client.SendMessage(createGroupMessage);
 
             button2.Enabled = true;
             inputField.Enabled = true;
@@ -215,6 +224,16 @@ namespace Client
             GroupMembers.ClearSelected();
             GroupNameText.Visible = false;
             addGroup.Visible = false;
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void GroupMembers_SelectedIndexChanged(object sender, EventArgs e)
+        {
 
         }
     }

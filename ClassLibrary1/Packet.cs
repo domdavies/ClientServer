@@ -15,6 +15,7 @@ namespace Packets
         LoginPacket,
         ClientListPacket,
         GroupMessage,
+        CreateGroup,
         Disconnect
     };
 
@@ -102,12 +103,24 @@ namespace Packets
     }
 
     [Serializable]
+    public class CreateGroup : Packet
+    {
+        public string GroupName;
+        public List<string> recipients;
+        public string sender;
+        public CreateGroup()
+        {
+            packetType = PacketType.CreateGroup;
+        }
+    }
+
+    [Serializable]
     public class GroupMessage : Packet
     {
         public string GroupName;
-        public string message;
         public List<string> recipients;
         public string sender;
+        public string message;
         public GroupMessage()
         {
             packetType = PacketType.GroupMessage;
